@@ -28,12 +28,31 @@ pip install -e ".[web]"
 ```
 
 ## 运行方法
-在 `wx4py` 根目录下，打开终端并运行以下命令：
+
+### 方式一：克隆仓库后启动（推荐做开发或第一次体验）
 
 ```bash
+git clone https://github.com/claw-codes/wx4py.git
+cd wx4py
+pip install -e ".[web]"
 streamlit run examples/web/streamlit_bulk_sender.py
 ```
-运行后，你的默认浏览器将会自动打开该网页工具（通常是 `http://localhost:8501`）。
+
+### 方式二：纯 pip 安装后启动
+
+```bash
+pip install "wx4py[web]"
+# 把这个示例文件下载到本地任意目录后运行，或直接克隆仓库取该文件
+streamlit run examples/web/streamlit_bulk_sender.py
+```
+
+### 自定义端口（可选）
+
+```bash
+streamlit run examples/web/streamlit_bulk_sender.py --server.port 8502
+```
+
+运行后，你的默认浏览器将会自动打开该网页工具（默认地址 `http://localhost:8501`）。停止服务在终端按 `Ctrl+C`。
 
 ## 使用说明
 1. **接收好友名单**：在文本框中输入需要发送的好友备注（每行一个）。例如：`25届初二-郑子轩妈妈`。

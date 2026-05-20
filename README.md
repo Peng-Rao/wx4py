@@ -286,6 +286,16 @@ with WeChatClient() as wx:
 
 运行后，你的微信会自动发送这条消息。
 
+### 启动 Web 批量发送工具
+
+无需写代码，通过网页给名单上的好友批量发送个性化文案 + 文件。安装好 `wx4py[web]` 后，在仓库根目录执行：
+
+```bash
+streamlit run examples/web/streamlit_bulk_sender.py
+```
+
+浏览器会自动打开 `http://localhost:8501`。详细使用说明见 [examples/web/README.md](./examples/web/README.md)。
+
 如果你是开发者，想查看更多调用示例，请参考 [examples/](./examples/) 目录。
 如果你想系统查看完整接口说明，请参考 [docs/guide/API_GUIDE.md](./docs/guide/API_GUIDE.md)。
 
