@@ -87,9 +87,12 @@ with col1:
     )
 
     # 3. 文件上传
-    st.subheader("3. 附加文件（可选）")
-    uploaded_file = st.file_uploader("选择要发送的文件")
-    
+    st.subheader("3. 附加文件（可选，支持多文件合并发送）")
+    uploaded_files = st.file_uploader(
+        "选择要发送的文件（可一次选择多个，将合并为一条消息发出）",
+        accept_multiple_files=True,
+    )
+
     st.write("") # 留点间距
     start_button = st.button("🚀 开始自动化发送", type="primary", use_container_width=True)
 
@@ -115,11 +118,18 @@ with col2:
             </div>
             """, unsafe_allow_html=True)
             
-            # 渲染文件附件的预览
-            if uploaded_file:
+            # 渲染文件附件的预览（多文件合并展示在一条气泡内）
+            if uploaded_files:
+                file_lines = "<br>".join(
+                    f"📄 <b>[文件]</b> {f.name}" for f in uploaded_files
+                )
+                merge_hint = (
+                    f"<div style='color:#888;font-size:12px;margin-bottom:6px;'>共 {len(uploaded_files)} 个文件，将合并发送</div>"
+                    if len(uploaded_files) > 1 else ""
+                )
                 st.markdown(f"""
                 <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; color: black; border: 1px solid #e5e5e5; max-width: 90%; display: inline-block; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    📄 <b>[文件]</b> {uploaded_file.name}
+                    {merge_hint}{file_lines}
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -148,32 +158,44 @@ if start_button:
     status_text = st.empty()
     log_container = st.container()
     
-    # 如果有文件，保存到临时目录
-    temp_file_path = None
-    if uploaded_file is not None:
-        temp_dir = tempfile.gettempdir()
-        temp_file_path = os.path.join(temp_dir, uploaded_file.name)
-        with open(temp_file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+    # 如果有文件，逐个保存到独立临时目录，避免同名覆盖
+    temp_file_paths: list[str] = []
+    temp_dir_for_files: str | None = None
+    if uploaded_files:
+        temp_dir_for_files = tempfile.mkdtemp(prefix="wx4py_bulk_")
+        for uf in uploaded_files:
+            path = os.path.join(temp_dir_for_files, uf.name)
+            with open(path, "wb") as f:
+                f.write(uf.getbuffer())
+            temp_file_paths.append(path)
         
     try:
         with WeChatClient(auto_connect=True) as wx:
             total = len(friends_list)
             for i, friend_remark in enumerate(friends_list):
                 status_text.text(f"正在处理: {friend_remark} ({i+1}/{total})")
-                
+
+                # 通讯录搜索用**完整原始备注**（含前缀和姓氏），与微信里的备注完全一致才能命中
+                search_target = friend_remark
+                # 称呼只用于消息文案，去掉前缀和姓氏，如 "25届初三-罗雅鹭妈妈" -> "雅鹭妈妈"
                 greeting_name = extract_greeting_name(friend_remark)
                 final_message = message_template.format(name=greeting_name)
-                
+
                 try:
                     # 发送文本消息
-                    wx.chat_window.send_to(friend_remark, final_message, target_type='contact')
-                    
-                    # 发送文件（如果有）
-                    if temp_file_path:
-                        wx.chat_window.send_file_to(friend_remark, temp_file_path, target_type='contact')
-                        
-                    log_container.success(f"✅ 发送成功: {friend_remark} -> 称呼为: [{greeting_name}]")
+                    wx.chat_window.send_to(search_target, final_message, target_type='contact')
+
+                    # 发送文件（如果有）：把多文件路径列表一次性交给 send_file_to，
+                    # 底层会通过剪贴板 CF_HDROP 把所有文件合并粘贴到一条消息里发出
+                    if temp_file_paths:
+                        wx.chat_window.send_file_to(
+                            search_target,
+                            temp_file_paths,
+                            target_type='contact',
+                        )
+
+                    file_log = f"，文件 {len(temp_file_paths)} 个（合并发送）" if temp_file_paths else ""
+                    log_container.success(f"✅ 发送成功: {friend_remark} -> 称呼为: [{greeting_name}]{file_log}")
                 except Exception as e:
                     log_container.error(f"❌ 发送失败: {friend_remark}. 错误信息: {str(e)}")
                 
@@ -187,9 +209,15 @@ if start_button:
         st.info("请确保已打开微信（支持 4.x 版本），并且当前没有被其他程序独占。")
         
     finally:
-        # 清理临时文件
-        if temp_file_path and os.path.exists(temp_file_path):
+        # 清理临时文件与临时目录
+        for path in temp_file_paths:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+        if temp_dir_for_files and os.path.isdir(temp_dir_for_files):
             try:
-                os.remove(temp_file_path)
-            except:
+                os.rmdir(temp_dir_for_files)
+            except Exception:
                 pass
