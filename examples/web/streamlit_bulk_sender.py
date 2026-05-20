@@ -21,6 +21,14 @@ except Exception as e:
             time.sleep(0.3)
         def send_file_to(self, *args, **kwargs):
             pass
+        def send_message_and_file_to(self, *args, **kwargs):
+            time.sleep(0.3)
+        def upload_files_to_helper(self, *args, **kwargs):
+            time.sleep(0.3)
+            return True
+        def forward_recent_merge_to(self, *args, **kwargs):
+            time.sleep(0.3)
+            return True
     class WeChatClient:
         def __init__(self, **kwargs):
             self.chat_window = MockChatWindow()
@@ -91,6 +99,17 @@ with col1:
     uploaded_files = st.file_uploader(
         "选择要发送的文件（可一次选择多个，将合并为一条消息发出）",
         accept_multiple_files=True,
+    )
+
+    # 4. 发送方式
+    use_forward_mode = st.checkbox(
+        "通过『文件传输助手』转发（先上传 1 次，后续好友只走『合并转发』，文案放进留言框）",
+        value=True,
+        help=(
+            "勾选后：文件先发到文件传输助手，每个好友通过『多选 → 合并转发』分发，"
+            "对每位好友只需 1 次对话框操作，文案作为留言一起送达。"
+            "未勾选则每个好友都重新打开聊天 + 重新上传文件。"
+        ),
     )
 
     st.write("") # 留点间距
@@ -172,6 +191,20 @@ if start_button:
     try:
         with WeChatClient(auto_connect=True) as wx:
             total = len(friends_list)
+
+            # 转发模式：开始批次前把全部文件上传到文件传输助手 1 次
+            use_forward = bool(use_forward_mode and temp_file_paths)
+            if use_forward:
+                status_text.text(f"预上传 {len(temp_file_paths)} 个文件到文件传输助手...")
+                try:
+                    ok = wx.chat_window.upload_files_to_helper(temp_file_paths)
+                except Exception as e:
+                    ok = False
+                    log_container.error(f"预上传到文件传输助手失败: {e}")
+                if not ok:
+                    log_container.error("预上传失败，自动回退到逐个上传模式")
+                    use_forward = False
+
             for i, friend_remark in enumerate(friends_list):
                 status_text.text(f"正在处理: {friend_remark} ({i+1}/{total})")
 
@@ -182,26 +215,40 @@ if start_button:
                 final_message = message_template.format(name=greeting_name)
 
                 try:
-                    # 发送文本消息
-                    wx.chat_window.send_to(search_target, final_message, target_type='contact')
-
-                    # 发送文件（如果有）：把多文件路径列表一次性交给 send_file_to，
-                    # 底层会通过剪贴板 CF_HDROP 把所有文件合并粘贴到一条消息里发出
-                    if temp_file_paths:
-                        wx.chat_window.send_file_to(
+                    if use_forward:
+                        # 仍停留在文件传输助手聊天，对每个好友走"多选 → 合并转发 → 留言"
+                        ok = wx.chat_window.forward_recent_merge_to(
+                            count=len(temp_file_paths),
+                            target=search_target,
+                            target_type='contact',
+                            leave_message=final_message,
+                        )
+                        if not ok:
+                            raise RuntimeError("合并转发失败（详见日志）")
+                        file_log = f"，文件 {len(temp_file_paths)} 个（合并转发 + 留言）"
+                    elif temp_file_paths:
+                        wx.chat_window.send_message_and_file_to(
                             search_target,
+                            final_message,
                             temp_file_paths,
                             target_type='contact',
                         )
+                        file_log = f"，文件 {len(temp_file_paths)} 个（每人重复上传）"
+                    else:
+                        wx.chat_window.send_to(
+                            search_target,
+                            final_message,
+                            target_type='contact',
+                        )
+                        file_log = ""
 
-                    file_log = f"，文件 {len(temp_file_paths)} 个（合并发送）" if temp_file_paths else ""
                     log_container.success(f"✅ 发送成功: {friend_remark} -> 称呼为: [{greeting_name}]{file_log}")
                 except Exception as e:
                     log_container.error(f"❌ 发送失败: {friend_remark}. 错误信息: {str(e)}")
-                
+
                 # 更新进度条
                 progress_bar.progress((i + 1) / total)
-                
+
         status_text.text("🎉 批量发送任务完成！")
         
     except Exception as e:
