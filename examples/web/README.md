@@ -31,16 +31,36 @@ pip install -e ".[web]"
 
 ### 方式一：克隆仓库后启动（推荐做开发或第一次体验）
 
+**Windows（PowerShell / CMD）：**
+
 ```bash
 git clone https://github.com/claw-codes/wx4py.git
 cd wx4py
+python -m venv .venv
+.venv\Scripts\activate
 pip install -e ".[web]"
 streamlit run examples/web/streamlit_bulk_sender.py
 ```
 
-### 方式二：纯 pip 安装后启动
+**macOS / Linux（仅 UI 演示模式，真实发送需要 Windows）：**
 
 ```bash
+git clone https://github.com/claw-codes/wx4py.git
+cd wx4py
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[web]"
+streamlit run examples/web/streamlit_bulk_sender.py
+```
+
+> 之后每次回到这个项目，先 `cd wx4py` 再激活虚拟环境（Windows 用 `.venv\Scripts\activate`，macOS/Linux 用 `source .venv/bin/activate`），然后直接 `streamlit run examples/web/streamlit_bulk_sender.py`。
+
+### 方式二：纯 pip 安装后启动（不克隆仓库）
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
+.venv\Scripts\activate
 pip install "wx4py[web]"
 # 把这个示例文件下载到本地任意目录后运行，或直接克隆仓库取该文件
 streamlit run examples/web/streamlit_bulk_sender.py

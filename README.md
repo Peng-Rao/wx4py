@@ -288,13 +288,27 @@ with WeChatClient() as wx:
 
 ### 启动 Web 批量发送工具
 
-无需写代码，通过网页给名单上的好友批量发送个性化文案 + 文件。安装好 `wx4py[web]` 后，在仓库根目录执行：
+无需写代码，通过网页给名单上的好友批量发送个性化文案 + 文件。从零到运行的完整命令：
 
 ```bash
+# 1) 进入项目目录
+cd wx4py
+
+# 2) 创建并激活虚拟环境
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+# source .venv/bin/activate
+
+# 3) 安装 web extras（首次或更新时执行）
+pip install -e ".[web]"
+
+# 4) 启动网页
 streamlit run examples/web/streamlit_bulk_sender.py
 ```
 
-浏览器会自动打开 `http://localhost:8501`。详细使用说明见 [examples/web/README.md](./examples/web/README.md)。
+浏览器会自动打开 `http://localhost:8501`。之后每次回来只需 `cd wx4py` → 激活虚拟环境 → 第 4 步即可。详细使用说明见 [examples/web/README.md](./examples/web/README.md)。
 
 如果你是开发者，想查看更多调用示例，请参考 [examples/](./examples/) 目录。
 如果你想系统查看完整接口说明，请参考 [docs/guide/API_GUIDE.md](./docs/guide/API_GUIDE.md)。
