@@ -35,6 +35,12 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
 ]
+web = [
+    "streamlit>=1.30",
+]
+all = [
+    "streamlit>=1.30",
+]
 
 [project.urls]
 Homepage = "https://github.com/claw-codes/wx4py"

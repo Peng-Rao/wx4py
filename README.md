@@ -260,7 +260,11 @@ AI 会自动生成代码并执行。详见 [AI Skill 使用指南](#ai-skill-快
 ### 安装
 
 ```bash
+# 核心库
 pip install wx4py
+
+# 同时包含 Web 端批量发送工具所需的 streamlit
+pip install "wx4py[web]"
 ```
 
 ### 环境要求

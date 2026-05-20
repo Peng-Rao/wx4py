@@ -15,10 +15,16 @@
 - 微信客户端 4.x（已测试 4.1.7.59, 4.1.8.29）
 
 ## 安装依赖
-在运行此工具前，请确保已经安装了 `wx4py` 和 `streamlit`：
+一条命令同时安装 `wx4py` 和 Web 端所需的 `streamlit`（通过 `web` extras）：
 
 ```bash
-pip install wx4py streamlit
+pip install "wx4py[web]"
+```
+
+如果你是直接克隆了仓库做开发，使用：
+
+```bash
+pip install -e ".[web]"
 ```
 
 ## 运行方法
