@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import streamlit as st
 
-st.set_page_config(page_title="wx4py 批量个性化发送工具", page_icon="💬", layout="wide")
+st.set_page_config(page_title="五阿哥群发助手", page_icon="💬", layout="wide")
 
 try:
     from src import WeChatClient
@@ -40,7 +40,7 @@ except Exception:
             pass
     st.warning("⚠️ 检测到非 Windows 环境或未安装 pywin32。当前已进入 **UI 演示模式**，所有发送操作仅做界面模拟，不会真正发送微信消息。")
 
-st.title("wx4py 批量个性化发送工具")
+st.title("五阿哥群发助手")
 st.markdown("通过网页版自动化给微信好友批量发送带称呼的专属消息和文件。")
 
 st.sidebar.header("配置区")
